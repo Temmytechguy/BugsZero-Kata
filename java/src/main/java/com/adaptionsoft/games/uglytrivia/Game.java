@@ -2,23 +2,36 @@ package com.adaptionsoft.games.uglytrivia;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
+//could use slf4j as logger instead of sout println()
 public class Game {
-    ArrayList players = new ArrayList();
+
+	//refactored the controlling loop
+	public static final int MAX_QUESTIONS = 50;
+
+	//refactored the board size
+	public static final int BOARD_SIZE = 12;
+
+	//arraylist doesn't specify which elements they contain
+	//use String instead
+    ArrayList<String> players = new ArrayList<>();
     int[] places = new int[6];
     int[] purses  = new int[6];
     boolean[] inPenaltyBox  = new boolean[6];
-    
-    LinkedList popQuestions = new LinkedList();
-    LinkedList scienceQuestions = new LinkedList();
-    LinkedList sportsQuestions = new LinkedList();
-    LinkedList rockQuestions = new LinkedList();
+
+	//also this linked list doesnt specify the type of elememts they contain
+	//using generics for type safety
+    LinkedList<String> popQuestions = new LinkedList<>();
+	LinkedList<String> scienceQuestions = new LinkedList<>();
+	LinkedList<String> sportsQuestions = new LinkedList<>();
+	LinkedList<String> rockQuestions = new LinkedList<>();
     
     int currentPlayer = 0;
     boolean isGettingOutOfPenaltyBox;
     
     public  Game(){
-    	for (int i = 0; i < 50; i++) {
+    	for (int i = 0; i < MAX_QUESTIONS; i++) {
 			popQuestions.addLast("Pop Question " + i);
 			scienceQuestions.addLast(("Science Question " + i));
 			sportsQuestions.addLast(("Sports Question " + i));
@@ -51,31 +64,31 @@ public class Game {
 		return players.size();
 	}
 
+	//
 	public void roll(int roll) {
-		System.out.println(players.get(currentPlayer) + " is the current player");
-		System.out.println("They have rolled a " + roll);
-		
-		if (inPenaltyBox[currentPlayer]) {
-			if (roll % 2 != 0) {
-				isGettingOutOfPenaltyBox = true;
-				
-				System.out.println(players.get(currentPlayer) + " is getting out of the penalty box");
-				movePlayerAndAskQuestion(roll);
-			} else {
-				System.out.println(players.get(currentPlayer) + " is not getting out of the penalty box");
-				isGettingOutOfPenaltyBox = false;
-				}
-			
-		} else {
 
-			movePlayerAndAskQuestion(roll);
+		String currentPlayerName =  players.get(currentPlayer);
+		System.out.println(currentPlayerName + " is the current player");
+		System.out.println("They have rolled a " + roll);
+
+		if(inPenaltyBox[currentPlayer] && roll % 2 == 0)
+		{
+			System.out.println(currentPlayerName + "is not getting out of the penalty box");
+			return;
 		}
+
+		isGettingOutOfPenaltyBox = inPenaltyBox[currentPlayer] && roll % 2 != 0;
+		if(isGettingOutOfPenaltyBox){
+			System.out.println(currentPlayerName + " is getting out of the penalty box");
+		}
+		movePlayerAndAskQuestion(roll);
+
 		
 	}
 
+	//player's location is incremented by the roll value but it should be incremented by 1
 	private void movePlayerAndAskQuestion(int roll) {
-		places[currentPlayer] = places[currentPlayer] + roll;
-		if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
+		places[currentPlayer] = (places[currentPlayer] + roll) % BOARD_SIZE;
 
 		System.out.println(players.get(currentPlayer)
                 + "'s new location is "
@@ -84,15 +97,25 @@ public class Game {
 		askQuestion();
 	}
 
+	//instead of the ==  refactored this method to use equals()
+	//players location is  not correctly updated after asking a question
 	private void askQuestion() {
-		if (currentCategory() == "Pop")
+		if (currentCategory().equals("Pop"))
 			System.out.println(popQuestions.removeFirst());
-		if (currentCategory() == "Science")
+		if (currentCategory().equals("Science"))
 			System.out.println(scienceQuestions.removeFirst());
-		if (currentCategory() == "Sports")
+		if (currentCategory().equals("Sports"))
 			System.out.println(sportsQuestions.removeFirst());
-		if (currentCategory() == "Rock")
-			System.out.println(rockQuestions.removeFirst());		
+		if (currentCategory().equals("Rock"))
+			System.out.println(rockQuestions.removeFirst());
+
+		//update the players location after asking the question
+		places[currentPlayer] = (places[currentPlayer] + 1) % 12;
+
+		System.out.println(players.get(currentPlayer)
+		         + "'s new location is "
+		         + places[currentPlayer]);
+		System.out.println("The category is " + currentCategory());
 	}
 	
 	
@@ -133,8 +156,9 @@ public class Game {
 			
 			
 		} else {
-		
-			System.out.println("Answer was corrent!!!!");
+
+			//change the text
+			System.out.println("Answer was correct!!!!");
 			purses[currentPlayer]++;
 			System.out.println(players.get(currentPlayer) 
 					+ " now has "
@@ -148,6 +172,8 @@ public class Game {
 			return winner;
 		}
 	}
+
+
 	
 	public boolean wrongAnswer(){
 		System.out.println("Question was incorrectly answered");
